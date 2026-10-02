@@ -22,8 +22,16 @@ userId: number
 createdAt: string
 }
 
-// Este type lo devuelve GET /api/tickets/{id} (el detalle de uno solo).
-// Este si trae description y statusHistory.
+// Un cambio de estado dentro del historial. Los nombres de las propiedades son
+// fromStatus / toStatus / occurredAt (asi los devuelve el backend).
+export interface TicketStatusTransition {
+fromStatus: TicketStatus
+toStatus: TicketStatus
+occurredAt: string
+}
+
+// Este type lo devuelve GET /api/tickets/{id} y todos los POST que cambian estado
+// (start, resolve, close...). Este si trae description y statusHistory.
 export interface Ticket {
 id: number
 title: string
@@ -32,5 +40,5 @@ status: TicketStatus
 priority: TicketPriority
 userId: number
 createdAt: string
-statusHistory: { from: TicketStatus; to: TicketStatus; changedAt: string }[]
+statusHistory: TicketStatusTransition[]
 }
