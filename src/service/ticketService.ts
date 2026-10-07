@@ -84,6 +84,27 @@ export async function getTicketById(ticketId: number): Promise<Ticket> {
   return res.json()
 }
 
+// Cambia la prioridad. Es PATCH (no POST) porque modifica PARTE del ticket,
+// no ejecuta una accion. El body lleva solo lo que cambia: { priority }.
+// Exige AGENT o ADMIN, igual que start/resolve/close.
+export async function updateTicketPriority(ticketId: number, priority: TicketPriority): Promise<Ticket> {
+  const res = await apiFetch(`/api/tickets/${ticketId}/priority`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ priority }),
+  })
+
+  if (res.status === 403) {
+    throw new Error("Necesitas ser AGENT o ADMIN para hacer esto")
+  }
+
+  if (!res.ok) {
+    throw new Error("No se pudo cambiar la prioridad")
+  }
+
+  return res.json()
+}
+
 // Las 3 acciones que cambian el estado de un ticket. El backend tiene un
 // endpoint para cada una: POST /api/tickets/{id}/start|resolve|close.
 // Las 3 exigen ser AGENT o ADMIN (@PreAuthorize en el backend).

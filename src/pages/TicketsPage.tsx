@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getTickets, getTicketById, changeTicketStatus, toTicketSummary } from "../service/ticketService";
+import { getTickets, getTicketById, changeTicketStatus, updateTicketPriority, toTicketSummary } from "../service/ticketService";
 import type { Ticket, TicketSummary, TicketStatus, TicketPriority } from "../types/ticket";
 import type { TicketAction } from "../service/ticketService";
 import TicketCard from "../components/TicketCard";
@@ -64,6 +64,28 @@ function TicketsPage({token,onUnauthorized,}: {token: string;onUnauthorized: () 
     }
   }
 
+  // Misma receta que handleTicketAction: limpiar, marcar, llamar, actualizar
+  // los dos estados (detalle completo + tarjeta resumen), manejar el error.
+  async function handlePriorityChange(ticketId: number, priority: TicketPriority) {
+    setError("")
+    setActingId(ticketId)
+
+    try {
+      const updatedTicket = await updateTicketPriority(ticketId, priority)
+
+      setSelectedTicket(updatedTicket)
+      setTickets((prev) =>
+        prev.map((t) => (t.id === updatedTicket.id ? toTicketSummary(updatedTicket) : t))
+      )
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "No se pudo cambiar la prioridad"
+      setError(message)
+      if (message.includes("expirada")) onUnauthorized()
+    } finally {
+      setActingId(null)
+    }
+  }
+
   function handleTicketCreated(ticket: TicketSummary) {
     // Lo ponemos PRIMERO con [ticket, ...prev]: lo nuevo aparece arriba.
     // Usamos la funcion (prev => ...) porque el estado pudo cambiar
@@ -85,18 +107,20 @@ function TicketsPage({token,onUnauthorized,}: {token: string;onUnauthorized: () 
   }, [token, statusFilter, priorityFilter, onUnauthorized]);
 
   return (
-  <div>
-    <h1>Tickets</h1>
+  // mx-auto + max-w-6xl = columna centrada de maximo 72rem, p-4 = aire alrededor.
+  <div className="mx-auto max-w-6xl p-4">
+    <h1 className="text-2xl font-bold text-gray-900">Tickets</h1>
 
     {/* El error ya no esconde la pagina: sale aqui y el resto sigue visible. */}
-    {error && <p style={{ color: "red" }}>{error}</p>}
+    {error && <p className="text-sm text-red-600">{error}</p>}
 
     <CreateTicketForm onCreated={handleTicketCreated} />
 
     {/* Filtros: al cambiar cualquiera, el useEffect de arriba repite la
         peticion porque statusFilter/priorityFilter estan en sus dependencias. */}
-    <div>
+    <div className="mb-4 flex flex-wrap gap-2">
       <select
+        className="rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm"
         value={statusFilter}
         onChange={(e) => setStatusFilter(e.target.value as TicketStatus | "")}
       >
@@ -108,6 +132,7 @@ function TicketsPage({token,onUnauthorized,}: {token: string;onUnauthorized: () 
       </select>
 
       <select
+        className="rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm"
         value={priorityFilter}
         onChange={(e) => setPriorityFilter(e.target.value as TicketPriority | "")}
       >
@@ -119,16 +144,20 @@ function TicketsPage({token,onUnauthorized,}: {token: string;onUnauthorized: () 
       </select>
     </div>
 
+    {/* Rejilla responsive: 1 columna en movil, 2 desde sm (tablet),
+        3 desde lg (escritorio). gap-4 = separacion entre tarjetas. */}
     {tickets.length === 0 ? (
       <p>No hay tickets todavia.</p>
     ) : (
-      tickets.map((ticket) => (
-        <TicketCard
-          key={ticket.id}
-          ticket={ticket}
-          onSelect={handleSelectTicket}
-        />
-      ))
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {tickets.map((ticket) => (
+          <TicketCard
+            key={ticket.id}
+            ticket={ticket}
+            onSelect={handleSelectTicket}
+          />
+        ))}
+      </div>
     )}
 
     {/* Mientras se carga el detalle mostramos un aviso en su lugar. */}
@@ -139,6 +168,7 @@ function TicketsPage({token,onUnauthorized,}: {token: string;onUnauthorized: () 
       <TicketDetail
         ticket={selectedTicket}
         onAction={handleTicketAction}
+        onPriorityChange={handlePriorityChange}
         actingId={actingId}
       />
     )}
@@ -146,5 +176,6 @@ function TicketsPage({token,onUnauthorized,}: {token: string;onUnauthorized: () 
   )
   
 }
+
 
 export default TicketsPage;
