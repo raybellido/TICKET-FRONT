@@ -50,6 +50,9 @@ jobs:
           # (Settings → Secrets and variables → Actions → VITE_API_URL).
           # Si no existe, la app usa http://localhost:8080 (solo sirve en local).
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          # Demo publica sin backend: los servicios devuelven datos falsos
+          # en memoria (ver src/service/mocks.ts). En local vale false.
+          VITE_USE_MOCKS: "true"
 
       - name: Subir el compilado
         # Guarda dist/ como artefacto para que el job deploy lo publique.

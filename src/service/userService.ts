@@ -1,9 +1,14 @@
 import { apiFetch } from "./api"
+import { USE_MOCKS, mockCreateUser, mockChangeRole } from "./mocks"
 import type { CreateUserInput, User, UserRole } from "../types/user"
 
 // Crea un usuario. Solo ADMIN (el backend da 403 al resto).
 // Devuelve 201 con el usuario creado, que ya trae su id.
 export async function createUser(input: CreateUserInput): Promise<User> {
+  if (USE_MOCKS) {
+    return mockCreateUser(input)
+  }
+
   const res = await apiFetch("/api/users", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -29,6 +34,10 @@ export async function createUser(input: CreateUserInput): Promise<User> {
 // Como el backend no tiene lista de usuarios, el id hay que saberlo
 // (el create de arriba lo devuelve).
 export async function changeUserRole(userId: number, role: UserRole): Promise<User> {
+  if (USE_MOCKS) {
+    return mockChangeRole(userId, role)
+  }
+
   const res = await apiFetch(`/api/users/${userId}/role`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },

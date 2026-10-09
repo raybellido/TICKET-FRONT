@@ -1,4 +1,12 @@
 import { apiFetch } from "./api"
+import {
+  USE_MOCKS,
+  mockListTickets,
+  mockCreateTicket,
+  mockGetTicketById,
+  mockChangeStatus,
+  mockUpdatePriority,
+} from "./mocks"
 import type { Ticket, TicketPriority, TicketStatus, TicketSummary } from "../types/ticket"
 
 // Lo que el formulario manda al crear. La prioridad la pedimos siempre
@@ -32,6 +40,12 @@ export interface TicketFilters {
 }
 
 export async function getTickets(filters: TicketFilters = {}): Promise<TicketSummary[]> {
+  // MODO DEMO: misma firma, datos falsos. El resto de la app no nota el cambio.
+  if (USE_MOCKS) {
+    const full = await mockListTickets(filters)
+    return full.map(toTicketSummary)
+  }
+
   // URLSearchParams construye "?status=OPEN&priority=HIGH" solo con los
   // filtros que vengan. Si no hay ninguno, la URL queda sin "?".
   const params = new URLSearchParams()
@@ -51,6 +65,10 @@ export async function getTickets(filters: TicketFilters = {}): Promise<TicketSum
 // Crea un ticket. Cualquier rol puede hacerlo (incluso CUSTOMER):
 // el backend asigna el ticket al usuario del token si no mandas userId.
 export async function createTicket(input: CreateTicketInput): Promise<TicketSummary> {
+  if (USE_MOCKS) {
+    return toTicketSummary(await mockCreateTicket(input))
+  }
+
   const res = await apiFetch("/api/tickets", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -75,6 +93,10 @@ export async function createTicket(input: CreateTicketInput): Promise<TicketSumm
 // Trae UN ticket completo (con description y statusHistory).
 // Se usa al pulsar "Ver ticket": la lista solo trae el resumen.
 export async function getTicketById(ticketId: number): Promise<Ticket> {
+  if (USE_MOCKS) {
+    return mockGetTicketById(ticketId)
+  }
+
   const res = await apiFetch(`/api/tickets/${ticketId}`)
 
   if (!res.ok) {
@@ -88,6 +110,10 @@ export async function getTicketById(ticketId: number): Promise<Ticket> {
 // no ejecuta una accion. El body lleva solo lo que cambia: { priority }.
 // Exige AGENT o ADMIN, igual que start/resolve/close.
 export async function updateTicketPriority(ticketId: number, priority: TicketPriority): Promise<Ticket> {
+  if (USE_MOCKS) {
+    return mockUpdatePriority(ticketId, priority)
+  }
+
   const res = await apiFetch(`/api/tickets/${ticketId}/priority`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -113,6 +139,10 @@ export type TicketAction = "start" | "resolve" | "close"
 // Una sola funcion para las 3 acciones: lo unico que cambia es la ultima
 // palabra de la URL. Devuelve el ticket COMPLETO (con description y statusHistory).
 export async function changeTicketStatus(ticketId: number, action: TicketAction): Promise<Ticket> {
+  if (USE_MOCKS) {
+    return mockChangeStatus(ticketId, action)
+  }
+
   const res = await apiFetch(`/api/tickets/${ticketId}/${action}`, {
     method: "POST",
   })

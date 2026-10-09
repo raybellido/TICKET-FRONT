@@ -1,3 +1,5 @@
+import { USE_MOCKS, mockLogin } from "./mocks"
+
 // La direccion del backend. La dejamos aqui arriba para tenerla en un solo sitio.
 // Misma idea que en api.ts: en local localhost, en despliegue la variable
 // de entorno VITE_API_URL. Se duplica aqui porque el login no usa apiFetch
@@ -15,6 +17,14 @@ const ROLE_KEY = "helpdesk_role"
 // Hace el POST de login. Si va bien devuelve los datos con el token.
 // Si va mal lanza un error con un mensaje que se puede mostrar en pantalla.
 export async function login(email: string, password: string) {
+  // MODO DEMO: sin backend, el login se resuelve con datos falsos.
+  if (USE_MOCKS) {
+    const data = await mockLogin(email, password)
+    localStorage.setItem(TOKEN_KEY, data.accessToken)
+    localStorage.setItem(ROLE_KEY, data.role)
+    return data
+  }
+
   const res = await fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
