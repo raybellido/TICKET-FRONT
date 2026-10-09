@@ -1,5 +1,8 @@
 // La direccion del backend. La dejamos aqui arriba para tenerla en un solo sitio.
-const API_URL = "http://localhost:8080"
+// Misma idea que en api.ts: en local localhost, en despliegue la variable
+// de entorno VITE_API_URL. Se duplica aqui porque el login no usa apiFetch
+// (aun no hay token que añadir cuando entras).
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080"
 
 // Clave con la que guardamos el token en el navegador.
 const TOKEN_KEY = "helpdesk_token"

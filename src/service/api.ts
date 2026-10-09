@@ -1,6 +1,9 @@
 import { getToken } from "./authService"
 
-const API_URL = "http://localhost:8080"
+// En local vale localhost. En GitHub Actions se inyecta con la variable
+// VITE_API_URL (ver .github/workflows/deploy.yml y .env.example).
+// El ?? significa "si no viene definida, usa localhost".
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080"
 
 // Hace fetch añadiendo el token solo. Los servicios ya no reciben el token
 // como parametro: lo leen de aqui dentro.

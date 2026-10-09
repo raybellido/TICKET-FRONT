@@ -1,0 +1,70 @@
+# Despliega el frontend a GitHub Pages en cada push a main.
+# Como funciona, en orden:
+#   1. build: arranca Ubuntu, instala Node, hace npm ci + npm run build.
+#   2. deploy: publica la carpeta dist/ en GitHub Pages.
+# Ver la ejecucion en GitHub: pestaña Actions del repositorio.
+
+name: Deploy frontend a GitHub Pages
+
+on:
+  # Se dispara al subir cambios a main...
+  push:
+    branches: ["main"]
+  # ...y tambien a mano desde la pestaña Actions (boton Run workflow).
+  workflow_dispatch:
+
+# Permisos minimos que necesita el deploy a Pages. Sin id-token: write
+# el paso deploy-pages falla: GitHub no sabe que este workflow puede publicar.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Si subes dos commits seguidos, no se pisan: el segundo espera al primero.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el codigo
+        uses: actions/checkout@v4
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        # ci = install limpio: usa package-lock.json tal cual, sin resolver
+        # versiones nuevas. En CI siempre ci, nunca install.
+        run: npm ci
+
+      - name: Compilar
+        run: npm run build
+        env:
+          # URL del backend en produccion. Se lee de un Secret del repo
+          # (Settings → Secrets and variables → Actions → VITE_API_URL).
+          # Si no existe, la app usa http://localhost:8080 (solo sirve en local).
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      - name: Subir el compilado
+        # Guarda dist/ como artefacto para que el job deploy lo publique.
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    # No empieza hasta que build termine bien.
+    needs: build
+    steps:
+      - name: Publicar en Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
