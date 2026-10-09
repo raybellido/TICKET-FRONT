@@ -2,6 +2,8 @@ import type {TicketSummary, TicketStatus, TicketPriority } from "../types/ticket
 
 interface TicketCardProps {
   ticket: TicketSummary;
+  // true si este es el ticket abierto en el detalle.
+  selected: boolean;
   onSelect: (ticket: TicketSummary) => void
 }
 
@@ -22,12 +24,15 @@ const PRIORITY_STYLES: Record<TicketPriority, string> = {
   CRITICAL: "bg-red-100 text-red-800",
 };
 
-function TicketCard({ ticket, onSelect }: TicketCardProps) {
+function TicketCard({ ticket, selected, onSelect }: TicketCardProps) {
 
   return (
-    // rounded-lg = esquinas redondeadas, border = borde fino,
+    // rounded-2xl = esquinas muy redondeadas, border = borde fino,
     // shadow-sm = sombra suave, hover:shadow-md = sombra mas grande al pasar el raton.
-    <div className="rounded-2xl border border-gray-200 bg-blue-50 p-4 shadow-sm transition hover:shadow-md">
+    // OJO: el color del borde esta DENTRO del ternario. Si dejaras tu
+    // border-gray-200 fuera y añadieras otro color dentro, habria dos
+    // colores a la vez y ganaria uno impredecible.
+    <div className={`rounded-2xl border bg-blue-50 p-4 shadow-sm transition hover:shadow-md ${selected ? "border-indigo-500 ring-2 ring-indigo-500" : "border-gray-200"}`}>
       <h2 className="text-lg font-semibold text-gray-900">{ticket.title}</h2>
 
       {/* Las "pildoras": rounded-full las hace ovaladas, text-xs las hace pequeñas. */}

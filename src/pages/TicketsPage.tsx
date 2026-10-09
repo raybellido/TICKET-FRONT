@@ -93,6 +93,14 @@ function TicketsPage({token,onUnauthorized,}: {token: string;onUnauthorized: () 
     setTickets((prev) => [ticket, ...prev])
   }
 
+  // Dato DERIVADO: se calcula de tickets en cada render, no se guarda
+  // en useState. Asi nunca se desincroniza: si cambia la lista (crear,
+  // accion, filtros), los numeros cambian solos sin codigo extra.
+  const openCount = tickets.filter((t) => t.status === "OPEN").length
+  const inProgressCount = tickets.filter((t) => t.status === "IN_PROGRESS").length
+  const resolvedCount = tickets.filter((t) => t.status === "RESOLVED").length
+  const closedCount = tickets.filter((t) => t.status === "CLOSED").length
+
   useEffect(() => {
     // "" || undefined da undefined: el filtro "todos" se manda como ausente.
     getTickets({
@@ -149,15 +157,22 @@ function TicketsPage({token,onUnauthorized,}: {token: string;onUnauthorized: () 
     {tickets.length === 0 ? (
       <p>No hay tickets todavia.</p>
     ) : (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {tickets.map((ticket) => (
-          <TicketCard
-            key={ticket.id}
-            ticket={ticket}
-            onSelect={handleSelectTicket}
-          />
-        ))}
-      </div>
+      <>
+        <p className="mb-2 text-sm text-gray-600">
+          {openCount} abiertos · {inProgressCount} en progreso · {resolvedCount} resueltos · {closedCount} cerrados
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {tickets.map((ticket) => (
+            <TicketCard
+              key={ticket.id}
+              ticket={ticket}
+              // ?. porque selectedTicket puede ser null (nada elegido aun).
+              selected={selectedTicket?.id === ticket.id}
+              onSelect={handleSelectTicket}
+            />
+          ))}
+        </div>
+      </>
     )}
 
     {/* Mientras se carga el detalle mostramos un aviso en su lugar. */}

@@ -2,6 +2,7 @@ import { useState, useCallback, type FormEvent } from "react"
 import { login, getToken, getRole, logout } from "./service/authService"
 import TicketsPage from "./pages/TicketsPage"
 import UsersPage from "./pages/UsersPage"
+import Navbar from "./components/Navbar"
 
 function App() {
   // useState = una variable que React recuerda entre renders y que, si cambia,
@@ -104,20 +105,15 @@ function App() {
 
   // Si llegamos aqui, es que si hay token.
   return (
-    <>
-      <button onClick={handleLogout}>Cerrar sesion</button>
-      <button onClick={() => setView("tickets")}>Tickets</button>
-      {/* Sin router: la "navegacion" es un estado que elige que pagina pintar.
-          El boton Usuarios solo existe para ADMIN. */}
-      {role === "ADMIN" && (
-        <button onClick={() => setView("users")}>Usuarios</button>
-      )}
+    // Fondo gris de pagina: las tarjetas blancas resaltan encima.
+    <div className="min-h-screen bg-gray-50">
+      <Navbar view={view} role={role} onNavigate={setView} onLogout={handleLogout} />
       {view === "users" && role === "ADMIN" ? (
         <UsersPage />
       ) : (
         <TicketsPage token={token} onUnauthorized={handleLogout} />
       )}
-    </>
+    </div>
   )
 }
 
